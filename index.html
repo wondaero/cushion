@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Canvas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="./normalize.css">
+
+    <style>
+        html, body{height: 100%;}
+        header{
+            background: cyan;
+            padding: 10px 5px;
+            margin-bottom: 10px;
+        }
+        .controller{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 5px;
+            margin-bottom: 10px;
+        }
+        .controller h3{
+            margin: 0;
+        }
+        header h1{
+            margin: 0;
+            font-size: 20px;
+        }
+        canvas{
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+            background: midnightblue;
+        }
+        .wrapper{display: flex; justify-content: center;}
+    </style>
+</head>
+<body>
+    <header>
+        <h1>쿠션</h1>
+    </header>
+    <div class="controller">
+        <select onchange="setCushion(this)">
+            <option>RANDOM</option>
+            <option>0</option>
+            <option>1</option>
+            <option>2</option>
+            <option>3</option>
+            <option>4</option>
+            <option>5</option>
+            <option>6</option>
+            <option>7</option>
+            <option>8</option>
+            <option>9</option>
+            <option>10</option>
+        </select>
+        <h3><span data-type="cur"></span> / <span data-type="total"></span></h3>
+        <button onclick="play()">PLAY</button>
+    </div>
+    <div class="wrapper">
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <script>
+        window.onresize = resizeFnc;
+
+        const getRandomNum = (mn, mx) => Math.floor(Math.random() * (mx - mn + 1));
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const xSize = setTableSize();
+        const calcedValue = wh => ((Math.random()) * (canvas[wh] - (xSize / 46 / 2 * 2))) + (xSize / 46 / 2); 
+
+        let direction = {}
+
+        const originInfo = {
+            my: {},
+            target: {},
+            radius: 0
+        };
+
+        originInfo.my.x = calcedValue('width');
+        originInfo.my.y = calcedValue('height');
+        originInfo.radius = +parseInt(xSize / 46 / 2);
+
+        const myBall = new MyBall(
+            originInfo.my.x,
+            originInfo.my.y,
+            originInfo.radius
+        );
+
+        const isCollision = (x1, x2, y1, y2, dVal) => {
+            const dx = x1 - x2;
+            const dy = y1 - y2;
+
+            if(dx * dx + dy * dy <= dVal * dVal * 2){
+                return true;
+            }else{
+                return false;
+            }
+        }
+
+        function setTargetBall(){
+            const x = calcedValue('width');
+            const y = calcedValue('height');
+            if(isCollision(originInfo.my.x, x, originInfo.my.y, y, originInfo.radius)){
+                console.log(2);
+                return setTargetBall();
+            }
+
+            return {
+                x: x,
+                y: y
+            }
+        }
+
+        const targetBallInfo = setTargetBall();
+
+        originInfo.target.x = targetBallInfo.x;
+        originInfo.target.y = targetBallInfo.y;
+        originInfo.target.radius = originInfo.radius;
+
+
+        const targetBall = new TargetBall(
+            originInfo.target.x,
+            originInfo.target.y,
+            originInfo.target.radius
+        );
+
+        const cushion = new Cushion();
+
+        cushion.setTotal('RANDOM');
+            
+        function resizeFnc() {}
+        resizeFnc();
+
+        function setTableSize(){
+            const x = window.innerWidth;
+            const h = window.innerHeight;
+
+            const cstX = !(x % 10) ? x - 20 : Math.floor(x / 10) * 10;
+
+            canvas.width = cstX;
+            canvas.height = cstX / 2;
+
+            return cstX;
+        }
+
+
+        function MyBall(x, y, radius) {
+            const t = this;
+            t.x = x;
+            t.y = y;
+            t.moveX = 0;
+            t.moveY = 0;
+            t.radius = radius;
+
+            t.draw = () => {
+                ctx.beginPath();
+                ctx.fillStyle = '#eed';
+                ctx.arc(t.x, t.y, t.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            t.draw();
+
+            t.update = (x, y) => {
+                if(t.x + t.radius >= canvas.width || t.x <= t.radius){
+                    t.moveX = -t.moveX;
+                    cushion.update();
+                }
+                if(t.y + t.radius >= canvas.height  || t.y <= t.radius){
+                    t.moveY = -t.moveY;
+                    cushion.update();
+                }
+
+                t.x += t.moveX;
+                t.y += t.moveY;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                targetBall.draw();
+                t.draw();
+
+
+                if(isCollision(t.x, originInfo.target.x, t.y, originInfo.target.y, originInfo.target.radius)){
+                    // alert('성공');
+                }
+            }
+        }
+
+        function TargetBall(x, y, radius) {
+            const t = this;
+            t.x = x;
+            t.y = y;
+            t.radius = radius;
+
+            t.draw = () => {
+                ctx.beginPath();
+                ctx.fillStyle = '#f00';
+                ctx.arc(t.x, t.y, t.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            t.draw();
+        }
+
+        canvas.addEventListener('click', function(e){
+            direction.x = e.offsetX;
+            direction.y = e.offsetY;
+
+            ctx.beginPath();
+            ctx.fillStyle = '#0f0';
+            ctx.arc(direction.x, direction.y, 1, 0, Math.PI * 2);
+            ctx.fill();
+
+            // const xSize = setTableSize();
+
+            // const myBall = new MyBall(xSize / 46);
+            // const targetBall = new TargetBall(xSize / 46);
+        });
+
+        function play(){
+            if(!direction.x){
+                alert('방향을 찍어주세요.');
+                return;
+            }
+
+            const cntVal = document.querySelector('select').value;
+            const dx = direction.x - myBall.x;
+            const dy = direction.y - myBall.y;
+
+            const speed = 1.5;
+
+            myBall.moveX = dx / Math.abs(dx) * speed;
+            myBall.moveY = dy / Math.abs(dx) * speed;
+
+            update();
+        }
+
+        let raf = '';
+
+        let rafCnt = 0;
+
+        
+        function update(timestamp){
+            raf = window.requestAnimationFrame(update);
+            rafCnt++;
+
+            if(!(rafCnt % 1)) myBall.update();
+        }
+
+        function setCushion(e){
+            cushion.setTotal(e.value);
+        }
+
+        function Cushion(){
+            const t = this;
+
+            t.total = 0;
+            t.cur = 0;
+
+            t.update = () => {
+                t.cur++;
+                document.querySelector('[data-type="cur"]').innerHTML = t.cur;
+            }
+            
+            t.setTotal = (total) => {
+                if(total === 'RANDOM') total = getRandomNum(0, 10);
+                t.total = total;
+                document.querySelector('select').value = t.total;
+                document.querySelector('[data-type="cur"]').innerHTML = 0;
+                document.querySelector('[data-type="total"]').innerHTML = t.total;
+            }
+        }
+
+
+    </script>
+</body>
+</html>
