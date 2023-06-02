@@ -189,6 +189,7 @@
                 if(isCollision(t.x, originInfo.target.x, t.y, originInfo.target.y, originInfo.target.radius)){
                     if(cushion.total === cushion.cur){
                         alert('성공');
+                        window.location.reload();
                     }
                 }
             }
@@ -246,7 +247,7 @@
             const dx = direction.x - myBall.x;
             const dy = direction.y - myBall.y;
 
-            const speed = 2;
+            const speed = 6;
 
             myBall.moveX = dx / Math.abs(dx) * speed;
             myBall.moveY = dy / Math.abs(dx) * speed;
