@@ -72,13 +72,15 @@
         const xSize = setTableSize();
         const calcedValue = wh => ((Math.random()) * (canvas[wh] - (xSize / 46 / 2 * 2))) + (xSize / 46 / 2); 
 
-        let direction = {}
+        let direction = {};
 
         const originInfo = {
             my: {},
             target: {},
             radius: 0
         };
+
+        let isPlay = false;
 
         originInfo.my.x = calcedValue('width');
         originInfo.my.y = calcedValue('height');
@@ -185,7 +187,9 @@
 
 
                 if(isCollision(t.x, originInfo.target.x, t.y, originInfo.target.y, originInfo.target.radius)){
-                    // alert('성공');
+                    if(cushion.total === cushion.cur){
+                        alert('성공');
+                    }
                 }
             }
         }
@@ -207,6 +211,10 @@
         }
 
         canvas.addEventListener('click', function(e){
+            if(isPlay) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
             direction.x = e.offsetX;
             direction.y = e.offsetY;
 
@@ -214,6 +222,9 @@
             ctx.fillStyle = '#0f0';
             ctx.arc(direction.x, direction.y, 1, 0, Math.PI * 2);
             ctx.fill();
+
+            myBall.draw();
+            targetBall.draw();
 
             // const xSize = setTableSize();
 
@@ -227,11 +238,15 @@
                 return;
             }
 
+            isPlay = true;
+
             const cntVal = document.querySelector('select').value;
+            document.querySelector('select').disabled = true;
+
             const dx = direction.x - myBall.x;
             const dy = direction.y - myBall.y;
 
-            const speed = 1.5;
+            const speed = 2;
 
             myBall.moveX = dx / Math.abs(dx) * speed;
             myBall.moveY = dy / Math.abs(dx) * speed;
@@ -263,6 +278,12 @@
 
             t.update = () => {
                 t.cur++;
+
+                if(t.total < t.cur){
+                    alert('실패!');
+                    window.location.reload();
+                }
+
                 document.querySelector('[data-type="cur"]').innerHTML = t.cur;
             }
             
